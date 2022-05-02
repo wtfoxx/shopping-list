@@ -1,10 +1,13 @@
+import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, Button, FlatList } from 'react-native';
 import { initializeApp } from "firebase/app";
 import { async } from '@firebase/util';
+import firebase from 'firebase/compat/app';
+import 'firebase/compat/firestore';
+import 'firebase/compat/auth'
 
-const firebase = require('firebase');
-require('firebase/firestore');
+
 
 export default class Shopping extends React.Component {
 
@@ -33,31 +36,32 @@ export default class Shopping extends React.Component {
   };
 
   componentDidMount() {
-    this.referenceShoppingLists = firebase.firestore().collection('shoppinglists');
+    this.referenceShoppingLists = firebase
+    .firestore()
+    .collection('shoppinglists');
 
   
     this.authUnsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
       if (!user) {
         await firebase.auth().signInAnonymously();
       }
-
       //update user state with currently active user data
       this.setState({
         uid: user.uid,
         loggedInText: 'Hello there',
       });
-
       //create a reference to the active user's shopping lists
       this.referenceShoppinglistUser = firebase
       .firestore()
       .collection('shoppinglists')
       .where('uid', '==', this.state.uid);
-    });
-
-    this.unsubscribeListUser = this.referenceShoppinglistUser.onSnapshot(this.onCollectionUpdate);
+    
+      this.unsubscribeListUser = this.referenceShoppinglistUser.onSnapshot(this.onCollectionUpdate);
+      });
   };
   
   componentWillUnmount() {
+    this.authUnsubscribe();
     this.unsubscribe();
   };
 
@@ -95,7 +99,7 @@ export default class Shopping extends React.Component {
           renderItem={({ item }) =>
           <Text style={styles.item}>{item.name}: {item.items}</Text>}
         />
-        <Button onPress={()=>addList()}>Add List</Button>
+        <Button onPress={() => this.addList()} title="Add List">Add List</Button>
       </View>
     );
   };
